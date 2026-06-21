@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Camera, Send } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getCountFromServer } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function InquiryForm() {
@@ -54,9 +54,13 @@ export default function InquiryForm() {
         photoUrl = await getDownloadURL(photoRef);
       }
 
-      // 2. Generate custom ID format (e.g., SC + random 6 digits)
-      const inquiryId = `SC${Math.floor(100000 + Math.random() * 900000)}`;
-
+     // 2. Generate Sequential ID (SC001, SC002, etc.)
+      const inquiryRef = collection(db, "inquiries");
+      const snapshot = await getCountFromServer(inquiryRef);
+      const totalCount = snapshot.data().count;
+      
+      // Adds 1 to the total count, and pads it with leading zeros (e.g., 1 becomes 001)
+      const inquiryId = `SC${String(totalCount + 1).padStart(3, '0')}`;
       // 3. Save entry to Firestore
       await addDoc(collection(db, "inquiries"), {
         inquiryId,
@@ -86,17 +90,33 @@ export default function InquiryForm() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+ return (
+    // Increased top padding (py-20) so the big logo doesn't hit the top of the browser window
+    <div className="min-h-screen bg-slate-50 py-20 px-4 sm:px-6 lg:px-8 text-gray-900">
+      
+      {/* Removed overflow-hidden so the logo can float outside the box */}
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg border border-gray-100 relative">
         
-        {/* Header Section */}
-        <div className="bg-blue-800 p-6 text-center text-white">
-          <h1 className="text-3xl font-bold mb-2">SITE COMPUTER</h1>
-          <p className="text-sm text-blue-200">Sharma Institute of Technological Education</p>
+        {/* Floating Logo Box - Made much bigger (w-40 h-40) and shifted completely above the text */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 -top-16 sm:-top-20 z-10">
+          <div className="bg-white p-2.5 rounded-3xl shadow-xl border border-gray-200 flex items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="SITE Logo" 
+              className="w-32 h-32 sm:w-40 sm:h-40 object-contain rounded-2xl" 
+            />
+          </div>
         </div>
+        <br /><br /><br /><br /><br /><br />
+        {/* Header Section - Added heavy top padding (pt-28) to push the text safely below the large logo */}
+        <div className="bg-blue-800 pt-24 sm:pt-28 pb-8 px-6 text-center text-white rounded-t-xl">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 tracking-wide">SITE COMPUTER</h1>
+          <p className="text-sm sm:text-base text-blue-200 font-medium">Sharma Institute of Technological Education</p>
+        </div>
+        
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* ... (Keep the rest of your form exactly as it is) ... */}
           <h2 className="text-2xl font-semibold text-gray-800 border-b pb-2 mb-6 text-center">
             Inquiry Form
           </h2>
